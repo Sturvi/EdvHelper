@@ -32,4 +32,12 @@ public class InlineKeyboardMarkupFactory extends AbstractInlineKeyboardMarkupFac
 
         return keyboard;
     }
+
+    public static InlineKeyboardMarkup getNextKeyboard(String dataParametr) {
+        var keyboard = creatNewInlineKeyboard();
+
+        addButtonToNewLine(keyboard, CallbackQueryDataEnum.NEXT, dataParametr);
+
+        return keyboard;
+    }
 }

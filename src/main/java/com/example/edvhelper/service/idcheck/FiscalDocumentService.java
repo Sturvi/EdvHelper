@@ -6,9 +6,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.nio.file.StandardOpenOption;
 
 @Service
 @RequiredArgsConstructor
@@ -20,23 +22,29 @@ public class FiscalDocumentService {
 
     public File fetchAndSaveDocument(WebClient webClient, String fiscalId) {
         log.trace("Fetching and saving document with fiscalId: {}", fiscalId);
-
         String url = BASE_URL + fiscalId;
         log.debug("Formed URL for request: {}", url);
-
         byte[] imageBytes = webClient.get()
                 .uri(url)
                 .retrieve()
                 .bodyToMono(byte[].class)
                 .block();
-
         if (imageBytes == null) {
             log.warn("No data fetched for fiscalId: {}", fiscalId);
             return null;
         }
-
         log.debug("Successfully fetched data for fiscalId: {}. Proceeding to save.", fiscalId);
-        return saveImage(fiscalId, imageBytes);
+
+        try {
+            Path tempFile = Files.createTempFile(fiscalId, ".jpeg");
+            Files.write(tempFile, imageBytes, StandardOpenOption.WRITE);
+            File file = tempFile.toFile();
+            file.deleteOnExit();
+            return file;
+        } catch (IOException e) {
+            log.error("Error while creating temporary file.", e);
+            return null;
+        }
     }
 
     private File saveImage(String fiscalId, byte[] imageBytes) {

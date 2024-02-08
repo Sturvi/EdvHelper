@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.telegram.telegrambots.meta.api.objects.*;
 
 import java.net.URL;
+import java.util.List;
 
 @Slf4j
 @Getter
@@ -27,6 +28,9 @@ public class BotEvent {
     private String fileName;
     @Setter
     private URL fileUrl;
+    private List<PhotoSize> photos;
+    @Setter
+    private java.io.File file;
 
     public static BotEvent getTelegramObject(Update update) {
         log.debug("Creating BotEvent object from the Update object");
@@ -34,6 +38,8 @@ public class BotEvent {
 
         if (isDocument(update)) {
             botEvent.eventType = BotEventType.DOCUMENT;
+        } else if (isPhoto(update)) {
+            botEvent.eventType = BotEventType.PHOTO;
         } else if (isMessageWithText(update)) {
             botEvent.eventType = BotEventType.MESSAGE;
         } else if (isCallbackWithData(update)) {
@@ -64,6 +70,7 @@ public class BotEvent {
             case CALLBACK_QUERY -> initCallbackQueryObject(update.getCallbackQuery());
             case DEACTIVATION_QUERY -> initUnsubscriptionObject(update.getMyChatMember());
             case DOCUMENT -> initDocumentObject(update.getMessage());
+            case PHOTO -> initPhotoObject(update.getMessage());
         }
         log.debug("Telegram object initialized");
     }
@@ -107,6 +114,16 @@ public class BotEvent {
         log.trace("Document object initialized");
     }
 
+    private void initPhotoObject(Message message) {
+        log.debug("Initializing photo object");
+        photos = message.getPhoto(); // Получаем список изображений
+        id = message.getChatId();
+        userName = message.getFrom().getUserName();
+        messageId = message.getMessageId();
+        from = message.getFrom();
+        log.debug("Photo object initialized");
+    }
+
     private static boolean isMessageWithText(Update update) {
         return !update.hasCallbackQuery() && update.hasMessage();
     }
@@ -127,6 +144,9 @@ public class BotEvent {
         return false;
     }
 
+    private static boolean isPhoto(Update update) {
+        return !update.hasCallbackQuery() && update.hasMessage() && update.getMessage().hasPhoto();
+    }
     private static boolean isDocument(Update update) {
         return !update.hasCallbackQuery() && update.hasMessage() && update.getMessage().hasDocument();
     }

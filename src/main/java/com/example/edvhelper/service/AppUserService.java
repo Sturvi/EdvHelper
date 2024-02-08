@@ -11,6 +11,7 @@ import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.objects.User;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 @Slf4j
@@ -35,6 +36,10 @@ public class AppUserService {
         log.trace("AppUser saved or updated successfully");
 
         return appUser;
+    }
+
+    public Optional<AppUser> getAppUser (Long telegramChatId) {
+        return appUserRepository.findByTelegramChatId(telegramChatId);
     }
 
     private void updateAppUserInDataBase(User user, AppUser userEntity) {

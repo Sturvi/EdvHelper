@@ -6,5 +6,6 @@ public enum BotEventType {
     CONTACT,
     DEACTIVATION_QUERY,
     DOCUMENT,
+    PHOTO,
     NONE
 }

@@ -2,14 +2,14 @@ package com.example.edvhelper.service.telegrambot.commands;
 
 import java.util.Arrays;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public enum TextCommandsEnum {
     START("/start"),
     GET("/get"),
-    STATISTICS("/statistic");
+    STATISTICS("/statistic"),
+    GET_SECRET("/getsecret"),
+    GET_BEST_SECRET("/getbestsecret");
 
     private final String command;
 

@@ -11,9 +11,7 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.File;
 import java.math.BigDecimal;
-import java.time.Duration;
 import java.time.LocalDate;
-import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.regex.Matcher;
@@ -56,7 +54,11 @@ public class FiscalIdProcessingService {
         }
 
         addReturnAmount(fiscalId, chequeText);
-        fiscalId.setStatus(FiscalIdStatusEnum.UNUSED);
+
+        if (fiscalId.getStatus() == FiscalIdStatusEnum.FROM_API_NEW)
+            fiscalId.setStatus(FiscalIdStatusEnum.FROM_API_UNUSED);
+        else
+            fiscalId.setStatus(FiscalIdStatusEnum.UNUSED);
     }
 
     private void addReturnAmount(FiscalId fiscalId, String chequeText) {
@@ -68,8 +70,7 @@ public class FiscalIdProcessingService {
         for (String line : lines) {
             if (line.contains("cashless:")) {
                 cashless = new BigDecimal(line.split(":")[1].trim());
-            }
-            else if (line.contains("total tax =")) {
+            } else if (line.contains("total tax =")) {
                 totalTax = new BigDecimal(line.split("=")[1].trim());
             }
         }
@@ -94,16 +95,22 @@ public class FiscalIdProcessingService {
 
 
     private File sendRequest(String fiscalId) {
-        WebClient webClient = proxyService.getWebClient();
-        if (webClient == null) {
-            throw new IllegalStateException("WebClient is null. Ensure that the ProxyService is correctly configured.");
+        int i = 0;
+        while (i < 8) {
+            try {
+                WebClient webClient = proxyService.getWebClient();
+                if (webClient == null) {
+                    throw new IllegalStateException("WebClient is null. Ensure that the ProxyService is correctly configured.");
+                }
+                return fiscalDocumentService.fetchAndSaveDocument(webClient, fiscalId);
+            } catch (Exception ex) {
+                i++;
+
+            }
+
         }
 
-        try {
-            return fiscalDocumentService.fetchAndSaveDocument(webClient, fiscalId);
-        } catch (Exception ex) {
-            throw new RuntimeException("Error occurred while fetching and saving document for fiscalId: " + fiscalId, ex);
-        }
+        return null;
     }
 
     private String processFiscalIdImage(File image) {

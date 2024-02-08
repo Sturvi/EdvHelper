@@ -16,11 +16,15 @@ import org.telegram.telegrambots.bots.TelegramLongPollingBot;
 import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.objects.Document;
 import org.telegram.telegrambots.meta.api.objects.File;
+import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
 import java.io.IOException;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -57,6 +61,10 @@ public class IdCheckerBot extends TelegramLongPollingBot {
 
                 if (BotEventType.DOCUMENT == eventEnum) {
                     botEvent.setFileUrl(downloadFileFromDocument(botEvent.getDocument()));
+                }
+
+                if (BotEventType.PHOTO == eventEnum) {
+                    botEvent.setFile(convert(botEvent.getPhotos().get(botEvent.getPhotos().size() - 1)));
                 }
 
                 var handler = botEventHandler.get(eventEnum);
@@ -138,4 +146,19 @@ public class IdCheckerBot extends TelegramLongPollingBot {
             log.error("Error handling message event", e);
         }
     }
+
+    public java.io.File convert(PhotoSize photoSize) throws TelegramApiException, IOException {
+        // Получить объект File от Telegram
+        GetFile getFileMethod = new GetFile();
+        getFileMethod.setFileId(photoSize.getFileId());
+        File telegramFile = execute(getFileMethod);
+
+        // Загрузить файл
+        URL fileUrl = new URL(telegramFile.getFileUrl(getBotToken()));
+        Path tempFile = Files.createTempFile("photo_", ".jpg");
+        Files.copy(fileUrl.openStream(), tempFile, StandardCopyOption.REPLACE_EXISTING);
+
+        return tempFile.toFile();
+    }
+
 }

@@ -41,4 +41,12 @@ public enum CallbackQueryDataEnum {
                 .map(Long::parseLong)
                 .orElse(null);
     }
+
+    public static String getDataParam(String data) {
+        return Arrays.stream(CallbackQueryDataEnum.values())
+                .filter(b -> data.toLowerCase().startsWith(b.getData().toLowerCase()))
+                .map(b -> data.replaceAll(b.getData(), "").trim())
+                .findFirst()
+                .orElse(null);
+    }
 }
